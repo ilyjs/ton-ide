@@ -1,0 +1,13 @@
+.treeRoot {
+    height: 90%;
+    margin: 0;
+    overflow: auto;
+}
+
+.draggingSource {
+    opacity: 0.3;
+}
+
+.dropTarget {
+    background-color: #e8f0fe;
+}
