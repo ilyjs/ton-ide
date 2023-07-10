@@ -54,14 +54,12 @@ export const DialogCreate = observer ( function DialogCreate   ({webcontainerIns
 
     const createTon = async () => {
         if(webcontainerInstance) {
-            console.log("webcontainerInstance", webcontainerInstance);
             const installProcess = await webcontainerInstance.spawn('npm', [ 'create', 'ton@0.5.0', rootDirectory]);
             const input2 = installProcess.input.getWriter();
 
             await installProcess.output.pipeTo( new WritableStream({
 
                 write(data) {
-                    console.log(data);
                     if (data.includes(`Ok to proceed? (y)`)) {
                         input2.write(`y\n`);
 
@@ -78,7 +76,6 @@ export const DialogCreate = observer ( function DialogCreate   ({webcontainerIns
 
                     if(data.includes(`For help and docs visit https://github.com/ton-community/blueprint`)){
                         fileSystemTreeCreate();
-                        console.log("Lotor");
                         setOpen(false);
                         setLoading(false);
                         installProcess.kill();

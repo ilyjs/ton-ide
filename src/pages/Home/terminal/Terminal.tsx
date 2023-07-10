@@ -57,7 +57,6 @@ export const Term = ({
 
                     terminal.write(data)
 
-                    console.log(data)
                     if (data.includes('Wrote compilation artifact')) fileSystemTreeCreate();
                     if (data.includes('Contract deployed at address')) fileSystemTreeCreate();
                     if (command) runCommand();
