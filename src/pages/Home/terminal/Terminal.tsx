@@ -1,47 +1,34 @@
 import {Terminal} from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import {WebContainer} from "@webcontainer/api";
-
+import {FitAddon} from 'xterm-addon-fit';
+import {WebContainer, WebContainerProcess} from "@webcontainer/api";
 import 'xterm/css/xterm.css';
-import {useEffect, useRef} from "react";
-import {observer} from "mobx-react-lite";
-import {useStore} from "../../../store";
+import {Dispatch, SetStateAction, useLayoutEffect, useRef} from "react";
 
-// const files = {
-//     'package.json': {
-//         file: {
-//             contents: `
-//         {
-//           "name": "vite-starter",
-//           "private": true,
-//           "version": "0.0.0",
-//           "type": "module",
-//           "scripts": {
-//             "dev": "vite",
-//             "build": "vite build",
-//             "preview": "vite preview"
-//           },
-//           "devDependencies": {
-//             "vite": "^4.0.4"
-//           }
-//         }`,
-//         },
-//     },
-// };
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const Term = observer( ({webcontainerInstance, buildNumber,deployNumber, fileSystemTreeCreate }: {webcontainerInstance: WebContainer | undefined, buildNumber: number, fileSystemTreeCreate(): Promise<void>, deployNumber: number}) => {
+type Term = {
+    webcontainerInstance: WebContainer | undefined,
+    fileSystemTreeCreate(): Promise<void>,
+    rootDirectory: string,
+    command?: string,
+    isTerminalRestarted: boolean,
+    setIsTerminalRestarted: Dispatch<SetStateAction<boolean>>
+}
+
+export const Term = ({
+                         webcontainerInstance,
+                         fileSystemTreeCreate,
+                         rootDirectory,
+                         command,
+                         isTerminalRestarted,
+                         setIsTerminalRestarted
+                     }: Term) => {
     const isBooted = useRef(false); // используем useRef чтобы хранить флаг
 
-    const {
-        rootDirectory
-    } = useStore().store.fileStore;
-
     async function startShell(terminal: Terminal, command?: string) {
-       if(!webcontainerInstance) return ;
-
+        if (!webcontainerInstance) return;
 
         const shellProcess = await webcontainerInstance.spawn('jsh', {
             terminal: {
@@ -52,15 +39,14 @@ export const Term = observer( ({webcontainerInstance, buildNumber,deployNumber, 
         const input = shellProcess.input.getWriter();
         const runCommand = (() => {
             let called = false;
-
-            return  () => {
+            return () => {
                 if (!called) {
                     called = true;
-                    setTimeout(async () =>{
-                       await input.write(`cd ${rootDirectory}\n`);
-                       await sleep(50);
+                    setTimeout(async () => {
+                        await input.write(`cd ${rootDirectory}\n`);
                         await sleep(50);
-                      await  input.write(command);
+                        await sleep(50);
+                        await input.write(command);
                     }, 500);
                 }
             };
@@ -69,26 +55,19 @@ export const Term = observer( ({webcontainerInstance, buildNumber,deployNumber, 
             new WritableStream({
                 write(data) {
 
-                    terminal.write(data);
+                    terminal.write(data)
 
                     console.log(data)
-                     if(data.includes('Wrote compilation artifact')) fileSystemTreeCreate();
-                     if(data.includes('Contract deployed at address')) fileSystemTreeCreate();
-                     if(command)  runCommand();
+                    if (data.includes('Wrote compilation artifact')) fileSystemTreeCreate();
+                    if (data.includes('Contract deployed at address')) fileSystemTreeCreate();
+                    if (command) runCommand();
                 },
             })
         );
-
-
-
-
         terminal.onData((data) => {
-            console.log(data)
-
-            input.write(data);
+                input.write(data)
 
         });
-
         return shellProcess;
     }
 
@@ -97,101 +76,51 @@ export const Term = observer( ({webcontainerInstance, buildNumber,deployNumber, 
     const terminal = new Terminal({convertEol: true});
 
     terminal.loadAddon(fitAddon);
-    const shellProcess = useRef<any>(null);
-    const observerResizeElement = useRef<any>(null);
-
+    const shellProcess = useRef<WebContainerProcess | undefined>(undefined);
+    const observerResizeElement = useRef<ResizeObserver>();
     const resize = () => {
         fitAddon.fit();
-        shellProcess.current.resize({
+        shellProcess?.current?.resize({
             cols: terminal.cols,
             rows: terminal.rows,
         });
     }
 
-    useEffect(() => {
+    const restartTerminal = (command?: string) => {
+        if (!terminalRef.current) return;
+        window.removeEventListener("resize", resize);
+        if (observerResizeElement.current) observerResizeElement.current.disconnect();
+        terminalRef?.current?.firstChild?.remove();
+        if (shellProcess.current) shellProcess.current.kill();
+        terminal.open(terminalRef.current);
+        fitAddon.fit();
+
+        (async () => {
+            shellProcess.current = await startShell(terminal, command);
+            window.addEventListener('resize', resize);
+            observerResizeElement.current = new ResizeObserver(() => {
+                resize();
+            });
+            const element = terminalRef?.current;
+            if (!element) return;
+            observerResizeElement.current.observe(element);
+            terminal.focus();
+        })();
+    }
+
+    useLayoutEffect(() => {
         if (terminalRef.current && webcontainerInstance && !isBooted.current) {
-            console.log(12345999)
             isBooted.current = true;
-            terminal.open(terminalRef.current);
-           // terminal.writeln('Hello, world!');
-            fitAddon.fit();
-           // (async ()  => await webcontainerInstance.mount(files))();
-            (async () => {
-                shellProcess.current = await startShell(terminal);
-
-               console.log('shellProcess.resize')
-               window.addEventListener('resize', resize);
-
-
-
-                 observerResizeElement.current = new ResizeObserver(() => {
-                    resize();
-                });
-
-                const element = terminalRef?.current;
-                if (!element) return;
-                observerResizeElement.current.observe(element);
-            })()
-
-
+            restartTerminal();
         }
     }, []);
 
-
-
-
-    useEffect(() => {
-        if(buildNumber === 0 && !!terminalRef.current)  return;
-        window.removeEventListener("resize", resize);
-        observerResizeElement.current.disconnect();
-        terminalRef?.current?.firstChild?.remove();
-        shellProcess.current.kill();
-        if(!terminalRef.current) return;
-        terminal.open(terminalRef.current);
-        fitAddon.fit();
-        (async () => {
-            //terminal.open(terminalRef.current)
-
-            shellProcess.current = await startShell(terminal, `npx blueprint build\n`);
-
-            window.addEventListener('resize', resize);
-            observerResizeElement.current = new ResizeObserver(() => {
-                resize();
-            });
-
-            const element = terminalRef?.current;
-            if (!element) return;
-            observerResizeElement.current.observe(element);
-        })()
-
-    }, [buildNumber])
-
-    useEffect(() => {
-        if(deployNumber === 0 && !!terminalRef.current)  return;
-        window.removeEventListener("resize", resize);
-        observerResizeElement.current.disconnect();
-        terminalRef?.current?.firstChild?.remove();
-        shellProcess.current.kill();
-        if(!terminalRef.current) return;
-        terminal.open(terminalRef.current);
-        fitAddon.fit();
-        (async () => {
-            //terminal.open(terminalRef.current)
-
-            shellProcess.current = await startShell(terminal, `npx blueprint run\n`);
-
-            window.addEventListener('resize', resize);
-            observerResizeElement.current = new ResizeObserver(() => {
-                resize();
-            });
-
-            const element = terminalRef?.current;
-            if (!element) return;
-            observerResizeElement.current.observe(element);
-        })()
-
-    }, [deployNumber])
-
+    useLayoutEffect(() => {
+        if (!isTerminalRestarted && command && !!terminalRef.current) {
+            restartTerminal(command);
+            setIsTerminalRestarted(true);
+        }
+    }, [command, isTerminalRestarted])
 
     return <div ref={terminalRef} style={{height: "100%"}} className="terminal"></div>
-})
+}

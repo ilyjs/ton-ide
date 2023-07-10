@@ -2,16 +2,11 @@ import {observable, action, makeObservable, computed, toJS} from 'mobx';
 import {RootStore as RootStoreModel} from './rootStore';
 import {NodeModel} from '@minoru/react-dnd-treeview';
 
-// data: {
-//     value?: string,
-//         path?: string
-//     type: string
-// }
-
 export type dataNodeModel = {
     value?: string,
     path?: string
-    type: string
+    type: string,
+    hash?: number
 }
 
 export class FileStore {
@@ -20,12 +15,19 @@ export class FileStore {
     files?: NodeModel<dataNodeModel>[] | null = null;
     selectedNode?: NodeModel<dataNodeModel> | null = null;
     lastId = 100;
+    selectHashFile: number | null | undefined = null;
     setFiles = (files: NodeModel<dataNodeModel>[]) => this.files = files;
-    setSelectedNode = (node: NodeModel<dataNodeModel>) => this.selectedNode = node;
+    setSelectedNode = (node: NodeModel<dataNodeModel>) => {
+        this.selectedNode = node;
+        if (!this.selectedNode.droppable)  this.selectHashFile = node?.data?.hash;
+    }
     setLastId = (lastId: number) => this.lastId = lastId;
     store: RootStoreModel;
 
     get selectFile() {
+        if(!this.selectedNode && !this.currentFile && this.selectHashFile && this.files) {
+            return  this.files.find((file) => file?.data?.hash === this.selectHashFile);
+        }
         if (!this.selectedNode) return toJS(this.currentFile);
         if (!this.selectedNode.droppable) {
             this.currentFile = this.selectedNode;
@@ -37,12 +39,10 @@ export class FileStore {
     changeFile = (file: NodeModel<dataNodeModel>, index: number) => {
         if(this.files) {
             this.files[index] = file
-            console.log("file", file)
         }
     }
 
     changeFileName = (file: NodeModel<dataNodeModel>, index: number) => {
-        console.log("this.files", toJS(this.files));
         if (this.files && this.files[index]) {
             this.files[index] = file;
             return toJS(this.files);
@@ -51,7 +51,6 @@ export class FileStore {
     }
 
     deleteFile = (id: number | string) => {
-        console.log("this.files", toJS(this.files));
         if (this.files) {
             const files = this.files.filter((file,) => file.id !== id);
             this.files = files;

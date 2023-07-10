@@ -63,7 +63,6 @@ export const EditorComponent = observer (  ({webcontainerInstance}: { webcontain
     };
     useEffect(() => {
         setTypeFile(getFileLanguage(selectFile?.text?? ''))
-        console.log("selectFile", selectFile);
 
     }, [selectFile])
 

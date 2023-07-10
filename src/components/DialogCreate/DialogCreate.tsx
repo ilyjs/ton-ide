@@ -55,7 +55,7 @@ export const DialogCreate = observer ( function DialogCreate   ({webcontainerIns
     const createTon = async () => {
         if(webcontainerInstance) {
             console.log("webcontainerInstance", webcontainerInstance);
-            const installProcess = await webcontainerInstance.spawn('npm', ['create', 'ton@latest', rootDirectory]);
+            const installProcess = await webcontainerInstance.spawn('npm', [ 'create', 'ton@0.5.0', rootDirectory]);
             const input2 = installProcess.input.getWriter();
 
             await installProcess.output.pipeTo( new WritableStream({
@@ -107,7 +107,7 @@ export const DialogCreate = observer ( function DialogCreate   ({webcontainerIns
     return (
         <div>
             <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>Blueprint Create project </DialogTitle>
+                <DialogTitle>Blueprint Create project</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
 

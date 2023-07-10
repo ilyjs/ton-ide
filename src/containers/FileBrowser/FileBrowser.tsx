@@ -1,40 +1,17 @@
 import React from 'react';
-//import {DndProvider} from 'react-dnd';
 import {
     Tree,
-   /// MultiBackend,
- //   getBackendOptions,
     NodeModel, DropOptions,
 } from '@minoru/react-dnd-treeview';
-//import {CustomData} from './components/types';
 import {CustomNode} from './components/CustomNode';
 import {useStore} from '../../store';
 import {observer} from 'mobx-react-lite';
-//import newFiles from '../../filesNew';
 import FileCreator from '../FileCreator';
 import './components/styles/style.css';
 import {NativeTypes} from 'react-dnd-html5-backend';
-import {toJS} from "mobx";
 import {WebContainer} from "@webcontainer/api";
 import {dataNodeModel} from '../../store/FileStore.ts'
-
-//initFile(files,['./01-simple-example', './02-nft-example']);
-//initFile2(filesJSON);
-
-// interface IFile  {
-//
-// id: number | string,
-//     parent: number | string,
-//     text: string,
-//     droppable?: boolean,
-//     data: {
-//         value?: string,
-//         path?: string
-//         type: string
-//     }
-//
-// }
-
+import hash from 'hash-it';
 export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInstance: WebContainer | undefined }) => {
     const {
         files,
@@ -87,11 +64,11 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
     //     else return 'text';
     // };
 
-    function getFileById(files: any, id: number | string) {
-        return files.find((file: any) => file.id === id);
+    function getFileById(files: NodeModel<dataNodeModel>[], id: number | string) {
+        return files.find((file) => file.id === id);
     }
 
-    function getFilePath(files: any, nameFile: string, parent: number | string): string {
+    function getFilePath(files: NodeModel<dataNodeModel>[], nameFile: string, parent: number | string): string {
         if (parent === 0) return `./${nameFile}`;
 
         const file = getFileById(files, parent);
@@ -103,36 +80,31 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
         return `${parentPath}/${nameFile}`;
     }
 
-
-    // function getAllChildren(id: number) {
-    //
-    // }
-
-    async function renameDirectory(directory: any, files: any, index: any, oldPath: string){
+    async function renameDirectory(directory: NodeModel<dataNodeModel>, files: NodeModel<dataNodeModel>[], index: number, oldPath: string){
        await removeFile(oldPath);
        files[index] = directory;
        await collectDirectory(directory, files, files);
     }
 
-    async function md(directory: any, files: any, newFiles: any){
+    async function md(directory: NodeModel<dataNodeModel>, files: NodeModel<dataNodeModel>[], newFiles: NodeModel<dataNodeModel>[]){
         const id = directory.id;
-        const oldFile = files.filter((file: any) => file.id === id)[0];
+        const oldFile = files.filter((file) => file.id === id)[0];
         const oldPath = getFilePath(files, oldFile.text, oldFile.parent);
         await removeFile(oldPath);
         await collectDirectory(directory, files, newFiles)
     }
 
-    async function collectDirectory(directory: any, files: any, newFiles: any) {
+    async function collectDirectory(directory: NodeModel<dataNodeModel>, files: NodeModel<dataNodeModel>[], newFiles: NodeModel<dataNodeModel>[]) {
         const id = directory.id;
-        const file = newFiles.filter((file: any) => file.id === id)[0];
+        const file = newFiles.filter((file) => file.id === id)[0];
         const path = getFilePath(newFiles, file.text, file.parent);
         await createNewFolder(path);
        // const filesInOld = files.filter((file: any) => file.parent === id);
-        const filesInNew = newFiles.filter((file: any) => file.parent === id);
+        const filesInNew = newFiles.filter((file) => file.parent === id);
         for (let i = 0; filesInNew.length > i; i++) {
-            if (filesInNew[i].data.type === 'file') {
+            if (filesInNew[i]?.data?.type === 'file') {
                 const newPatch = getFilePath(newFiles, filesInNew[i].text, filesInNew[i].parent);
-                await saveFile(newPatch, filesInNew[i].data.value);
+                await saveFile(newPatch, filesInNew[i]?.data?.value);
             } else {
                 await collectDirectory(filesInNew[i], files, newFiles);
             }
@@ -152,7 +124,7 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
         return {baseName, index, extension};
     }
 
-    function generateUniqueName(files: any, fileName: string) {
+    function generateUniqueName(files: NodeModel<dataNodeModel>[], fileName: string) {
         const {baseName, index, extension} = extractNameAndIndex(fileName);
 
         let newIndex = index;
@@ -177,21 +149,13 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
         return uniqueName;
     }
 
-    // const changeDuplicateName = (name: string) => {
-    //   console.log('changeDuplicateName');
-    //   const nameParts = name.split('.');
-    //   if (nameParts.length === 1) return name + 1;
-    //   nameParts[nameParts.length - 2] = nameParts[nameParts.length - 2] + '1';
-    //   return nameParts.join('.');
-    // };
-
-    function isNameMatchCheck(files: any, nameFile: string, parent: string | number): boolean {
+    function isNameMatchCheck(files: NodeModel<dataNodeModel>[], nameFile: string, parent: string | number): boolean {
         if (!nameFile ?? !parent ?? !files) {
             throw new Error('Missing argument: nameFile, parent, or files is undefined');
         }
         files = files ?? []
-        const folderFiles = files.filter((file: any) => parent === file.parent);
-        return folderFiles.some((file: any) => file.text === nameFile);
+        const folderFiles = files.filter((file) => parent === file.parent);
+        return folderFiles.some((file) => file.text === nameFile);
     }
 
     const handleDrop = async (newTree: NodeModel<dataNodeModel>[], options: DropOptions) => {
@@ -207,13 +171,22 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
                 let fileName = uploadFiles[i].name;
                 await uploadFiles[i].text().then((text) => (value = text));
                 //const language = getFileLanguage(fileName);
+                if(!files) return;
                 const isNameMatch = isNameMatchCheck(files, fileName, dropTargetId);
                 if (isNameMatch) fileName = generateUniqueName(newTree, fileName);
 
                 const path = getFilePath(files, fileName, dropTargetId);
 
                 await saveFile(path, value);
-
+                const nodeHash = {
+                    parent: dropTargetId,
+                    text: fileName,
+                    data: {
+                        type: 'file',
+                        value,
+                    },
+                }
+                const hashsum = hash(nodeHash);
                 nodes.push({
                     id: lastId + 1,
                     parent: dropTargetId,
@@ -221,6 +194,7 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
                     data: {
                         path: path,
                         type: 'file',
+                        hash: hashsum,
                         //fileType: language,
                        // language,
                         value,
@@ -229,47 +203,34 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
             }
 
             const mergedTree = [...newTree, ...nodes];
-
-
             setFiles(mergedTree);
             setLastId(lastId + uploadFiles.length);
         } else {
             const id = monitor.getItem().id;
-            console.log("newTree", newTree);
-
-
             const index = newTree.findIndex(item => item.id === id);
             let dropFile = newTree[index];
-            console.log('dropFile', dropFile)
             let fileName = dropFile.text;
             const oldIndex = files?.findIndex(item => item.id === id);
             let oldTarget: string | number = 1;
             if (files && oldIndex) oldTarget = files[oldIndex].id;
             const dropFileOld = files?.filter(file => file.id === id)[0];
-            console.log({dropFileOld})
+            if(!files) return;
             const currentPath = getFilePath(files, fileName, oldTarget);
-            console.log("currentPath", currentPath);
-            console.log("files", toJS(files));
 
             const isNameMatch = isNameMatchCheck(files, fileName, dropTargetId);
             if (isNameMatch) fileName = generateUniqueName(newTree, fileName);
 
             const path = getFilePath(files, fileName, dropTargetId);
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
             if (dropFileOld && dropFileOld.data && dropFileOld.data.type === 'file') {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                await moveFile(currentPath, path, dropFile.data.value);
-
-                dropFile = {...dropFile, text: fileName, data: {...dropFileOld.data, path}};
-                console.log("loto", dropFile)
+                await moveFile(currentPath, path, dropFile?.data?.value);
+                const {id, ...hashfile} = dropFile;
+               const hashsum = hash({...hashfile, text: fileName, data: {type: dropFileOld.data.type, value: dropFileOld.data.value }});
+                dropFile = {...dropFile, text: fileName, data: {...dropFileOld.data, path, hash: hashsum}};
             } else {
-
-                dropFile = {...dropFile, text: fileName, data: {path, type: 'directory'}};
+                const {id, ...hashfile} = dropFile;
+                const hashsum = hash({...hashfile, text: fileName, data: {type: 'directory' }});
+                dropFile = {...dropFile, text: fileName, data: {path, type: 'directory', hash: hashsum}};
                 await md(dropFile, files, newTree);
-                console.log('dropFile folder', dropFile)
-
             }
 
             newTree[index] = dropFile;
@@ -289,31 +250,10 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
     };
     const handleSelect = (node: NodeModel<dataNodeModel>) => setSelectedNode(node);
 
-    // useEffect(() => {
-    //   setFiles(newFiles);
-    // }, []);
-
-    // useEffect(() => {
-    //   files && initFile3(files);
-    //   setTimeout(() => {
-    //     //console.log(vol.toJSON())
-    //     //deleteFile('/01-simple-example/stdlib.fc1');
-    //
-    //   }, 3000);
-    //
-    // }, [JSON.stringify(files)]);
-
-    // const changePathFilesChildrenFolder = (files: any, id: any) => {
-    //     const childrenFiles = files.filter((file: any) => file.parent == id);
-    //     for (let i = 0; i < childrenFiles.length; i++) {
-    //         const fileName = childrenFiles[i].text;
-    //         const path = getFilePath(files, fileName, id);
-    //         const index = files.findIndex((file: any) => file.id === childrenFiles[i].id);
-    //         files[index].data.path = path;
-    //     }
-    //     if (childrenFiles) setFiles(files);
-    // };
-
+    const getHash = (file: NodeModel<dataNodeModel>) => {
+        const {id, ...hashfile} = file;
+        return  hash({...hashfile, data: {type: file?.data?.type, value: file?.data?.value}})
+    }
     const onChangeFileName = async (id: string | number, fileName: string) => {
         if (!files) return;
         const {file, index} = findFileById(files, id);
@@ -326,14 +266,16 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
         if (file.data) {
            // const language = getFileLanguage(fileName);
             const path = getFilePath(files, fileName, file.parent);
+
             file.data = {...file.data, path};
         }
         file.text = fileName;
+        const hashsum = getHash(file);
+        if(file?.data) file.data.hash = hashsum;
         if (file?.data?.type === 'file') {
             const path = getFilePath(files, fileName, file.parent);
           await  moveFile(oldPath, path, file.data.value);
         } else {
-          console.log("files[index]",files[index])
           await  renameDirectory(file,files, index, oldPath);
         }
         // const newFiles = changeFileName(file, index);
@@ -344,34 +286,38 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
     };
 
     const onDelete =  (id: number | string) => {
-        console.log("onDelete 1");
         if (!files) return;
-        // const {index} = findFileById(files, id);
-        // if (!index) return;
-        //removeFile
-        console.log("onDelete 2");
         deleteFile(id);
         const {file} = findFileById(files, id);
         const patch = getFilePath(files, file?.text??'', file?.parent??'');
         removeFile(patch);
-
-
     };
 
     const addFolder = async (event: React.MouseEvent) => {
         event.stopPropagation();
         const parent = 1;
         let fileName = 'untitled';
+        if(!files) return;
         const isNameMatch = isNameMatchCheck(files, 'untitled', parent);
         if (isNameMatch) fileName = generateUniqueName(files, fileName);
         const path = getFilePath(files, fileName, parent);
-        const template = {
+
+        const hashsum = getHash({
             'id': lastId + 1,
             parent,
             'droppable': true,
             'text': fileName,
             data: { type: 'directory' }
+        });
+
+        const template = {
+            'id': lastId + 1,
+            parent,
+            'droppable': true,
+            'text': fileName,
+            data: { type: 'directory', hash: hashsum }
         };
+
         if (!files) return;
         await createNewFolder(path);
         const mergedTree = [...files, template];
@@ -385,9 +331,20 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
         event.stopPropagation();
         const parent = 1;
         let fileName = 'unnamed';
+        if(!files) return;
         const isNameMatch = isNameMatchCheck(files, fileName, parent);
         if (isNameMatch) fileName = generateUniqueName(files, fileName);
         const path = getFilePath(files, fileName, parent);
+        const hashsum = getHash({
+            'id': lastId + 1,
+            parent,
+            'droppable': false,
+            'text': fileName,
+            'data': {
+                value: "",
+                type: 'file'
+            }
+        });
         const template = {
             'id': lastId + 1,
             parent,
@@ -397,19 +354,17 @@ export const FileBrowser = observer(({webcontainerInstance}: { webcontainerInsta
                 path,
                 //'fileType': 'txt',
                 value: "",
-                type: 'file'
+                type: 'file',
+                hash: hashsum
                 //'language': 'txt'
             }
         }
         if (!files) return;
         await saveFile(path);
         const mergedTree = [...files, template];
-        console.log("mergedTree", toJS(mergedTree))
         setFiles(mergedTree);
         setLastId(lastId + 1);
     };
-
-    console.log("files", files)
 
     return <>
         <FileCreator addFile={addFile} addFolder={addFolder}/>

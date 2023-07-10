@@ -5,7 +5,7 @@ import Home from "../pages/Home";
 
 export const router = createBrowserRouter([
     {
-        path: "/ton-ide",
+        path: "/",
         element: <Home/>
     },
 ]);

@@ -52,7 +52,6 @@ export const CustomNode: React.FC<Props> = observer( (props) => {
   };
 
   const onDelete = (event: React.MouseEvent) => {
-    console.log(544)
     props.onDelete(props.node.id);
     event.stopPropagation();
   }

@@ -1,3 +1,3 @@
 import {useWebcontainers} from "./useWebcontainers.tsx"
-
-export {useWebcontainers}
+import {useEditor} from "./useEditor.ts"
+export {useWebcontainers, useEditor}
