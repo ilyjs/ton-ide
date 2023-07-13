@@ -54,9 +54,7 @@ export const Term = ({
         shellProcess.output.pipeTo(
             new WritableStream({
                 write(data) {
-
-                    terminal.write(data)
-
+                    terminal.write(data);
                     if (data.includes('Wrote compilation artifact')) fileSystemTreeCreate();
                     if (data.includes('Contract deployed at address')) fileSystemTreeCreate();
                     if (command) runCommand();

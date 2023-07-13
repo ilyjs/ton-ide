@@ -25,7 +25,7 @@ export const Home = memo(() => {
 
     const {
         setFiles,
-        rootDirectory
+        rootDirectory, setSelectedNode
     } = useStore().store.fileStore;
 
     const runCommandTerminal = (command?: string) => {
@@ -38,6 +38,7 @@ export const Home = memo(() => {
             createTree('/', excludeItems, webcontainerInstance)
                 .then(tree => {
                     setFiles(tree);
+                    setSelectedNode(null);
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -51,6 +52,10 @@ export const Home = memo(() => {
 
     const deploy = () => {
         runCommandTerminal(`npx blueprint run\n`);
+    }
+
+    const runTest = () => {
+        runCommandTerminal(`npx blueprint test\n`);
     }
 
     const ELEMENT_MAP: { [viewId: string]: JSX.Element } = {
@@ -77,7 +82,7 @@ export const Home = memo(() => {
             <DndProvider context={window} key={500} backend={MultiBackend} options={getBackendOptions()}>
                 <NavBar/>
                 <WorkSpace>
-                    <ActionBar deploy={deploy} build={build}/>
+                    <ActionBar runTest={runTest} deploy={deploy} build={build}/>
                     <WorkSpaceMosaic>
                         <Mosaic<string>
                             renderTile={(id) => ELEMENT_MAP[id]}

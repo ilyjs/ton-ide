@@ -17,9 +17,10 @@ export class FileStore {
     lastId = 100;
     selectHashFile: number | null | undefined = null;
     setFiles = (files: NodeModel<dataNodeModel>[]) => this.files = files;
-    setSelectedNode = (node: NodeModel<dataNodeModel>) => {
+    setSelectedNode = (node: NodeModel<dataNodeModel> | null) => {
         this.selectedNode = node;
-        if (!this.selectedNode.droppable)  this.selectHashFile = node?.data?.hash;
+        if (node && !this.selectedNode?.droppable)  this.selectHashFile = node?.data?.hash;
+        if(!node) this.selectHashFile = null;
     }
     setLastId = (lastId: number) => this.lastId = lastId;
     store: RootStoreModel;

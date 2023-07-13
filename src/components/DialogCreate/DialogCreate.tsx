@@ -6,11 +6,13 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Select, {SelectChangeEvent} from '@mui/material/Select';
-import {FormControl, MenuItem} from "@mui/material";
+import Select from '@mui/material/Select';
+import {FormControl, FormHelperText, MenuItem} from "@mui/material";
 import InputLabel from '@mui/material/InputLabel';
 import Box from '@mui/material/Box';
 import {WebContainer} from '@webcontainer/api';
+import {useForm, SubmitHandler} from "react-hook-form"
+
 // import path from "path-browserify";
 // import {useStore} from "../../store";
 import {observer} from "mobx-react-lite";
@@ -19,6 +21,7 @@ import {useStore} from "../../store";
 
 interface IProps {
     webcontainerInstance: WebContainer | undefined,
+
     fileSystemTreeCreate(): Promise<void>
 }
 
@@ -33,31 +36,44 @@ interface IProps {
 //     }
 // }
 
-export const DialogCreate = observer ( function DialogCreate   ({webcontainerInstance, fileSystemTreeCreate}: IProps) {
+interface IFormInput {
+    rootDirectory: string,
+    contractName: string,
+    projectTemplate: string
+}
 
+
+export const DialogCreate = observer(function DialogCreate({webcontainerInstance, fileSystemTreeCreate}: IProps) {
     const {
-        rootDirectory, setRootDirectory,
+        register,
+        handleSubmit,
+        formState: {errors},
+    } = useForm<IFormInput>()
+    
+    const {
+         setRootDirectory,
     } = useStore().store.fileStore;
 
     const [open, setOpen] = React.useState(true);
     const [loading, setLoading] = React.useState(false);
     ///const [projectName, setProjectName] = React.useState("");
-    const [contractName, setContractName] = React.useState("");
-    const [projectTemplate, setProjectTemplate] = React.useState("");
 
+    const onSubmit: SubmitHandler<IFormInput> = (data) => {
+        const {rootDirectory, contractName, projectTemplate} = data;
+        setRootDirectory(rootDirectory);
+        setLoading(true);
+        (async () => {
+            if (webcontainerInstance) await createTon(rootDirectory, contractName, projectTemplate);
+            setOpen(false);
+        })()
+    }
 
-
-
-
-
-
-
-    const createTon = async () => {
-        if(webcontainerInstance) {
-            const installProcess = await webcontainerInstance.spawn('npm', [ 'create', 'ton@0.5.0', rootDirectory]);
+    const createTon = async (rootDirectory: string, contractName: string, projectTemplate: string) => {
+        if (webcontainerInstance) {
+            const installProcess = await webcontainerInstance.spawn('npm', ['create', 'ton@0.5.0', rootDirectory]);
             const input2 = installProcess.input.getWriter();
 
-            await installProcess.output.pipeTo( new WritableStream({
+            await installProcess.output.pipeTo(new WritableStream({
 
                 write(data) {
                     if (data.includes(`Ok to proceed? (y)`)) {
@@ -74,7 +90,7 @@ export const DialogCreate = observer ( function DialogCreate   ({webcontainerIns
 
                     }
 
-                    if(data.includes(`For help and docs visit https://github.com/ton-community/blueprint`)){
+                    if (data.includes(`For help and docs visit https://github.com/ton-community/blueprint`)) {
                         fileSystemTreeCreate();
                         setOpen(false);
                         setLoading(false);
@@ -87,94 +103,101 @@ export const DialogCreate = observer ( function DialogCreate   ({webcontainerIns
             }));
 
 
-
         }
     }
-    const handleClose = async () => {
-        setLoading(true);
-        console.log(rootDirectory, contractName, projectTemplate)
-        if(webcontainerInstance) await createTon();
-        setOpen(false);
-    };
 
-    const handleChange = (event: SelectChangeEvent) => {
-        setProjectTemplate(event.target.value as string);
-    };
 
     return (
         <div>
-            <Dialog open={open} onClose={handleClose}>
+            <Dialog open={open}>
                 <DialogTitle>Blueprint Create project</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
 
-                    </DialogContentText>
-                    <Box
-                        component="form"
-                        noValidate
-                        autoComplete="off"
-                    >
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id="name"
-                            label="Project name"
-                            type="text"
-                            fullWidth
-                            variant="standard"
-                            value={rootDirectory}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                setRootDirectory(event.target.value);
-                            }}
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <div>
+                        <DialogContent>
+                            <DialogContentText>
 
-                        />
-                        <TextField
-                            margin="dense"
-                            id="contractName"
-                            label="First created contract name (PascalCase)"
-                            type="text"
-                            fullWidth
-                            variant="standard"
-                            value={contractName}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                setContractName(event.target.value);
-                            }}
-
-                        />
-                        <FormControl variant="standard" fullWidth>
-                            <InputLabel>Choose the project template</InputLabel>
-                            <Select
-                                label="Choose the project template"
-                                value={projectTemplate}
-                                onChange={handleChange}
+                            </DialogContentText>
+                            <Box
+                                component="form"
+                                noValidate
+                                autoComplete="off"
                             >
-                                <MenuItem value={`\n`}>An empty contract (FunC)</MenuItem>
-                                <MenuItem value={`\x1B[B\n`}>A simple counter contract (FunC)</MenuItem>
-                                <MenuItem disabled value={2}>An empty contract (TACT)</MenuItem>
-                                <MenuItem disabled value={3}>A simple counter contract (TACT)</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Box sx={{ m: 1, position: 'relative' }}>
-                        <Button disabled={loading} onClick={handleClose}>Create </Button>
+                                <TextField
+                                    autoFocus
+                                    margin="dense"
+                                    id="name"
+                                    label="Project name"
+                                    type="text"
+                                    fullWidth
+                                    variant="standard"
+                                    error={!!errors.rootDirectory}
+                                    helperText={errors.rootDirectory ? "Incorrect entry." : ""}
+                                    {...register("rootDirectory", {required: true, maxLength: 20})}
+                                    // value={rootDirectory}
+                                    // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    //     setRootDirectory(event.target.value);
+                                    // }}
 
-                        {loading && (
-                            <CircularProgress
-                                size={24}
-                                sx={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    marginTop: '-12px',
-                                    marginLeft: '-12px',
-                                }}
-                            />
-                        )}
-                    </Box>
-                </DialogActions>
+                                />
+                                <TextField
+                                    margin="dense"
+                                    id="contractName"
+                                    label="First created contract name (PascalCase)"
+                                    type="text"
+                                    fullWidth
+                                    variant="standard"
+                                    error={!!errors.contractName}
+                                    helperText={errors.contractName ? "Incorrect entry." : ""}
+                                    {...register("contractName", {
+                                        required: true,
+                                        maxLength: 20,
+                                        pattern: /^(?:[A-Z][a-z]+)+$/
+                                    })}
+                                    // value={contractName}
+                                    // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    //     setContractName(event.target.value);
+                                    // }}
+
+                                />
+                                <FormControl error={!!errors.projectTemplate} variant="standard" fullWidth>
+                                    <InputLabel>Choose the project template</InputLabel>
+                                    <Select
+                                        label="Choose the project template"
+                                        // value={projectTemplate}
+                                        // onChange={handleChange}
+                                        {...register("projectTemplate", {required: true})}
+                                    >
+                                        <MenuItem value={`\n`}>An empty contract (FunC)</MenuItem>
+                                        <MenuItem value={`\x1B[B\n`}>A simple counter contract (FunC)</MenuItem>
+                                        <MenuItem disabled value={2}>An empty contract (TACT)</MenuItem>
+                                        <MenuItem disabled value={3}>A simple counter contract (TACT)</MenuItem>
+                                    </Select>
+                                    <FormHelperText>{errors.projectTemplate ? "Required field." : ""}</FormHelperText>
+                                </FormControl>
+                            </Box>
+                        </DialogContent>
+                        <DialogActions>
+                            <Box sx={{m: 1, position: 'relative'}}>
+                                <Button type="submit" disabled={loading}>Create </Button>
+
+                                {loading && (
+                                    <CircularProgress
+                                        size={24}
+                                        sx={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            marginTop: '-12px',
+                                            marginLeft: '-12px',
+                                        }}
+                                    />
+                                )}
+                            </Box>
+                        </DialogActions>
+                    </div>
+                </form>
             </Dialog>
         </div>
     );
-} )
+})

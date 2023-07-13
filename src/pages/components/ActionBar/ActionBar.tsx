@@ -5,7 +5,7 @@ import FileCopyOutlinedIcon from '@mui/icons-material/FileCopyOutlined';
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import ChangeCircleOutlinedIcon from '@mui/icons-material/ChangeCircleOutlined';
 import Tooltip from '@mui/material/Tooltip';
-
+import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined';
 import {grey} from '@mui/material/colors';
 
 import styled from "@emotion/styled";
@@ -49,7 +49,7 @@ const Button = styled.button`
 `
 
 
-export function ActionBar({build, deploy}: { build: () => void,  deploy: () => void}) {
+export function ActionBar({build, deploy, runTest}: { build: () => void,  deploy: () => void, runTest: () => void}) {
     const theme = useTheme();
     return (<Main theme={theme}>
         <Actions>
@@ -59,6 +59,9 @@ export function ActionBar({build, deploy}: { build: () => void,  deploy: () => v
             </Tooltip>
             <Tooltip placement="left-start" title="Deploy">
             <Button onClick={() => deploy()}><ChangeCircleOutlinedIcon className="icon-active-bar" sx={{color: grey['A400']}}/></Button>
+            </Tooltip>
+            <Tooltip placement="left-start" title="Tests">
+                <Button onClick={() => runTest()}><VerifiedOutlinedIcon className="icon-active-bar" sx={{color: grey['A400']}}/></Button>
             </Tooltip>
         </Actions>
 
