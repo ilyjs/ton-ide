@@ -109,95 +109,109 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
 
     return (
         <div>
-            <Dialog open={open}>
-                <DialogTitle>Blueprint Create project</DialogTitle>
+            {!webcontainerInstance?  (
+                        <CircularProgress
+                        size={64}
+                        sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            marginTop: '-12px',
+                            marginLeft: '-12px',
+                        }}
+                    />
+                ) :
+                <Dialog open={open}>
+                {webcontainerInstance?   <DialogTitle>Blueprint Create project</DialogTitle> : "" }
+              <form onSubmit={handleSubmit(onSubmit)}>
+                        <div>
+                            <DialogContent>
+                                <DialogContentText>
 
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <div>
-                        <DialogContent>
-                            <DialogContentText>
+                                </DialogContentText>
+                                <Box
+                                    component="form"
+                                    noValidate
+                                    autoComplete="off"
+                                >
+                                    <TextField
+                                        autoFocus
+                                        margin="dense"
+                                        id="name"
+                                        label="Project name"
+                                        type="text"
+                                        fullWidth
+                                        variant="standard"
+                                        error={!!errors.rootDirectory}
+                                        helperText={errors.rootDirectory ? "Incorrect entry." : ""}
+                                        {...register("rootDirectory", {required: true, maxLength: 20})}
+                                        // value={rootDirectory}
+                                        // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                        //     setRootDirectory(event.target.value);
+                                        // }}
 
-                            </DialogContentText>
-                            <Box
-                                component="form"
-                                noValidate
-                                autoComplete="off"
-                            >
-                                <TextField
-                                    autoFocus
-                                    margin="dense"
-                                    id="name"
-                                    label="Project name"
-                                    type="text"
-                                    fullWidth
-                                    variant="standard"
-                                    error={!!errors.rootDirectory}
-                                    helperText={errors.rootDirectory ? "Incorrect entry." : ""}
-                                    {...register("rootDirectory", {required: true, maxLength: 20})}
-                                    // value={rootDirectory}
-                                    // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                    //     setRootDirectory(event.target.value);
-                                    // }}
-
-                                />
-                                <TextField
-                                    margin="dense"
-                                    id="contractName"
-                                    label="First created contract name (PascalCase)"
-                                    type="text"
-                                    fullWidth
-                                    variant="standard"
-                                    error={!!errors.contractName}
-                                    helperText={errors.contractName ? "Incorrect entry." : ""}
-                                    {...register("contractName", {
-                                        required: true,
-                                        maxLength: 20,
-                                        pattern: /^(?:[A-Z][a-z]+)+$/
-                                    })}
-                                    // value={contractName}
-                                    // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                    //     setContractName(event.target.value);
-                                    // }}
-
-                                />
-                                <FormControl error={!!errors.projectTemplate} variant="standard" fullWidth>
-                                    <InputLabel>Choose the project template</InputLabel>
-                                    <Select
-                                        label="Choose the project template"
-                                        // value={projectTemplate}
-                                        // onChange={handleChange}
-                                        {...register("projectTemplate", {required: true})}
-                                    >
-                                        <MenuItem value={`\n`}>An empty contract (FunC)</MenuItem>
-                                        <MenuItem value={`\x1B[B\n`}>A simple counter contract (FunC)</MenuItem>
-                                        <MenuItem disabled value={2}>An empty contract (TACT)</MenuItem>
-                                        <MenuItem disabled value={3}>A simple counter contract (TACT)</MenuItem>
-                                    </Select>
-                                    <FormHelperText>{errors.projectTemplate ? "Required field." : ""}</FormHelperText>
-                                </FormControl>
-                            </Box>
-                        </DialogContent>
-                        <DialogActions>
-                            <Box sx={{m: 1, position: 'relative'}}>
-                                <Button type="submit" disabled={loading}>Create </Button>
-
-                                {loading && (
-                                    <CircularProgress
-                                        size={24}
-                                        sx={{
-                                            position: 'absolute',
-                                            top: '50%',
-                                            left: '50%',
-                                            marginTop: '-12px',
-                                            marginLeft: '-12px',
-                                        }}
                                     />
-                                )}
-                            </Box>
-                        </DialogActions>
-                    </div>
-                </form>
+                                    <TextField
+                                        margin="dense"
+                                        id="contractName"
+                                        label="First created contract name (PascalCase)"
+                                        type="text"
+                                        fullWidth
+                                        variant="standard"
+                                        error={!!errors.contractName}
+                                        helperText={errors.contractName ? "Incorrect entry." : ""}
+                                        {...register("contractName", {
+                                            required: true,
+                                            maxLength: 20,
+                                            pattern: /^(?:[A-Z][a-z]+)+$/
+                                        })}
+                                        // value={contractName}
+                                        // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                        //     setContractName(event.target.value);
+                                        // }}
+
+                                    />
+                                    <FormControl error={!!errors.projectTemplate} variant="standard" fullWidth>
+                                        <InputLabel>Choose the project template</InputLabel>
+                                        <Select
+                                            label="Choose the project template"
+                                            // value={projectTemplate}
+                                            // onChange={handleChange}
+                                            {...register("projectTemplate", {required: true})}
+                                        >
+                                            <MenuItem value={`\n`}>An empty contract (FunC)</MenuItem>
+                                            <MenuItem value={`\x1B[B\n`}>A simple counter contract (FunC)</MenuItem>
+                                            <MenuItem disabled value={2}>An empty contract (TACT)</MenuItem>
+                                            <MenuItem disabled value={3}>A simple counter contract (TACT)</MenuItem>
+                                        </Select>
+                                        <FormHelperText>{errors.projectTemplate ? "Required field." : ""}</FormHelperText>
+                                    </FormControl>
+                                </Box>
+                            </DialogContent>
+                            <DialogActions>
+                                <Box sx={{m: 1, position: 'relative'}}>
+                                    <Button type="submit" disabled={loading}>Create </Button>
+
+                                    {loading && (
+                                        <CircularProgress
+                                            size={24}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: '50%',
+                                                left: '50%',
+                                                marginTop: '-12px',
+                                                marginLeft: '-12px',
+                                            }}
+                                        />
+                                    )}
+                                </Box>
+                            </DialogActions>
+                        </div>
+                    </form>
+
+
             </Dialog>
+            }
         </div>
     );
 })
