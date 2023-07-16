@@ -33,7 +33,7 @@ export const Home = memo(() => {
         setIsTerminalRestarted(false);
     }
 
-    const fileSystemTreeCreate = async (excludeItems: string[] = ['node_modules', '.gitignore', '.prettierignore', '.prettierrc', 'package-lock.json']) => {
+    const fileSystemTreeCreate = async (excludeItems: string[] = ['.gitignore', '.prettierignore', '.prettierrc', 'package-lock.json']) => {
         if (webcontainerInstance) {
             createTree('/', excludeItems, webcontainerInstance)
                 .then(tree => {
