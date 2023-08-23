@@ -1229,10 +1229,10 @@
     loupe "^2.3.6"
     pretty-format "^27.5.1"
 
-"@webcontainer/api@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@webcontainer/api/-/api-1.1.4.tgz#9447d40495e8055747fb02e9f7ccc093c3cce9ae"
-  integrity sha512-JjGQl25+QzuHOKLKr5QX0dAvqOFLw06YY47eWKMwkxz1otfYPtuhTRRjascqMLxGbLoRF6i1idV+vlInp5gwvA==
+"@webcontainer/api@1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@webcontainer/api/-/api-1.1.5.tgz#bb19832a75180c19d378aa4fb60678cec7450593"
+  integrity sha512-qMJyqO+A8+B8JKW/IW9KVQblAiEQwesq7ka6w8pgm6DXKWCQaPVOco4Zo7FxZ09OmBIX+lnXyfKbQzXiORLGJg==
 
 abab@^2.0.6:
   version "2.0.6"

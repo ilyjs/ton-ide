@@ -16,5 +16,12 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'require-corp',
       'Cross-Origin-Opener-Policy': 'same-origin',
     },
+    proxy: {
+      '/bridge': {
+        target: 'https://ton-ide.co',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
 })

@@ -18,6 +18,7 @@ import {useForm, SubmitHandler} from "react-hook-form"
 import {observer} from "mobx-react-lite";
 import CircularProgress from '@mui/material/CircularProgress';
 import {useStore} from "../../store";
+import evtSource_index from "../../pages/files/evtSource_index.ts";
 
 interface IProps {
     webcontainerInstance: WebContainer | undefined,
@@ -63,14 +64,26 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
         setRootDirectory(rootDirectory);
         setLoading(true);
         (async () => {
+
             if (webcontainerInstance) await createTon(rootDirectory, contractName, projectTemplate);
+
+
             setOpen(false);
         })()
     }
 
+    const createTmp = async (rootDirectory: string) => {
+        if (webcontainerInstance) {
+            await webcontainerInstance.fs.mkdir(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp`);
+            await webcontainerInstance.fs.writeFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/index.js`, evtSource_index);
+            await webcontainerInstance.fs.writeFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/client_cache`, '{"events": []}');
+            await webcontainerInstance.fs.writeFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/server_cache`, '{}');
+        }
+    }
+
     const createTon = async (rootDirectory: string, contractName: string, projectTemplate: string) => {
         if (webcontainerInstance) {
-            const installProcess = await webcontainerInstance.spawn('npm', ['create', 'ton@0.5.0', rootDirectory]);
+            const installProcess = await webcontainerInstance.spawn('npm', ['create', 'ton@latest', rootDirectory]);
             const input2 = installProcess.input.getWriter();
 
             await installProcess.output.pipeTo(new WritableStream({
@@ -94,6 +107,7 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
                         fileSystemTreeCreate();
                         setOpen(false);
                         setLoading(false);
+                        createTmp(rootDirectory);
                         installProcess.kill();
                         input2.abort();
                     }
@@ -106,6 +120,10 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
         }
     }
 
+    // useEffect(() => {
+    //     if(!open)
+    //     "node_modules/@tonconnect/isomorphic-eventsource/index.js"
+    // }, [open]);
 
     return (
         <div>

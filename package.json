@@ -19,7 +19,7 @@
     "@monaco-editor/react": "4.5.1",
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.0",
-    "@webcontainer/api": "1.1.4",
+    "@webcontainer/api": "1.1.5",
     "allotment": "^1.19.0",
     "gh-pages": "^5.0.0",
     "hash-it": "^6.0.0",
