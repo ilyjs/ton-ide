@@ -36,24 +36,19 @@ export const Home = observer(() => {
 
     const sseExecutor = (request: string, rootDirectory: string) => {
         if(evtSource.current) evtSource.current.close();
-       // const evtSource = new EventSource(request)
-       // setEvtSource(new EventSource(request));
         evtSource.current = new EventSource(request);
         if(evtSource.current) {
             evtSource.current.onmessage = async (e) => {
                 if (!webcontainerInstance) return;
-                let client = await webcontainerInstance.fs.readFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/client_cache`, 'utf-8');
-                client = JSON.parse(client);
+                const clientJson = await webcontainerInstance.fs.readFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/client_cache`, 'utf-8');
+                const client = JSON.parse(clientJson);
 
                 const msg = JSON.parse(e.data);
-                // @ts-ignore
                 client.events.push({type: 'msg', msg});
-                client = JSON.stringify(client);
-                await webcontainerInstance.fs.writeFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/client_cache`, client);
-                // ${e.data}`;
+                const clientResult = JSON.stringify(client);
+                await webcontainerInstance.fs.writeFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/client_cache`, clientResult);
             };
         }
-        //evtSource.close()
     }
 
     const sseRunner = (rootDirectory: string) => {
@@ -61,17 +56,13 @@ export const Home = observer(() => {
          setInterval(async () => {
             if (webcontainerInstance) {
                 const serverJson = await webcontainerInstance.fs.readFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/server_cache`, 'utf-8');
-               // let client = await webcontainerInstance.fs.readFile('/tmp/client_cache', 'utf-8');
-                //client = JSON.parse(client);
                const server: {id: string, request: string} = JSON.parse(serverJson);
                 const id = server?.id;
 
                 if (server.request && sseId.current !== id) {
                     await webcontainerInstance.fs.writeFile(`/${rootDirectory}/node_modules/@tonconnect/isomorphic-eventsource/tmp/client_cache`, '{"events": []}');
                     sseId.current = id;
-                    // @ts-ignore
                     sseExecutor(server.request, rootDirectory);
-                   // clearInterval(idInterval);
                 }
             }
         }, 2000)
