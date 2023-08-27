@@ -36,7 +36,7 @@ if (!global.EventSource) {
     global.EventSource = function (link, ...data) {
 
         try {
-            link = link.replace('https://bridge.tonapi.io/', 'https://bridge.tonapi.io/')//');
+            link = link.replace('https://bridge.tonapi.io/', 'https://ton-ide.co/')//');
 
             const absolutePath = path.resolve();
 
