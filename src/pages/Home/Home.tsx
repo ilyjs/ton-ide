@@ -66,8 +66,6 @@ export const Home = observer(() => {
                 }
             }
         }, 2000)
-
-
     }
 
     useEffect(() => {

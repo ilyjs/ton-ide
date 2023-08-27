@@ -6,12 +6,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Select from '@mui/material/Select';
+import Select, {SelectChangeEvent} from '@mui/material/Select';
 import {FormControl, FormHelperText, MenuItem} from "@mui/material";
 import InputLabel from '@mui/material/InputLabel';
 import Box from '@mui/material/Box';
 import {WebContainer} from '@webcontainer/api';
-import {useForm, SubmitHandler} from "react-hook-form"
+import {useForm, SubmitHandler, Controller} from "react-hook-form"
 
 // import path from "path-browserify";
 // import {useStore} from "../../store";
@@ -49,6 +49,7 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
         register,
         handleSubmit,
         formState: {errors},
+        control,
     } = useForm<IFormInput>()
     
     const {
@@ -71,6 +72,11 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
             setOpen(false);
         })()
     }
+
+
+    const submitForm = () => {
+        handleSubmit(onSubmit)();
+    };
 
     const createTmp = async (rootDirectory: string) => {
         if (webcontainerInstance) {
@@ -141,7 +147,7 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
                 ) :
                 <Dialog open={open}>
                 {webcontainerInstance?   <DialogTitle>Blueprint Create project</DialogTitle> : "" }
-              <form onSubmit={handleSubmit(onSubmit)}>
+
                         <div>
                             <DialogContent>
                                 <DialogContentText>
@@ -183,32 +189,40 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
                                             maxLength: 20,
                                             pattern: /^(?:[A-Z][a-z]+)+$/
                                         })}
-                                        // value={contractName}
-                                        // onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                        //     setContractName(event.target.value);
-                                        // }}
+
 
                                     />
                                     <FormControl error={!!errors.projectTemplate} variant="standard" fullWidth>
                                         <InputLabel>Choose the project template</InputLabel>
-                                        <Select
-                                            label="Choose the project template"
-                                            // value={projectTemplate}
-                                            // onChange={handleChange}
-                                            {...register("projectTemplate", {required: true})}
-                                        >
-                                            <MenuItem value={`\n`}>An empty contract (FunC)</MenuItem>
-                                            <MenuItem value={`\x1B[B\n`}>A simple counter contract (FunC)</MenuItem>
-                                            <MenuItem disabled value={2}>An empty contract (TACT)</MenuItem>
-                                            <MenuItem disabled value={3}>A simple counter contract (TACT)</MenuItem>
-                                        </Select>
+                                        <Controller
+                                            defaultValue = {''}
+                                            render={({ field: { onChange, value } }) => (
+                                                <Select
+                                                    label="Choose the project template"
+                                                    // value={projectTemplate}
+                                                    // onChange={handleChange}
+                                                    onChange={ (event: SelectChangeEvent) =>  onChange(event.target.value as string)}
+                                                    value={value}
+
+                                                >
+                                                    <MenuItem value={`\n`}>An empty contract (FunC)</MenuItem>
+                                                    <MenuItem value={`\x1B[B\n`}>A simple counter contract (FunC)</MenuItem>
+                                                    <MenuItem disabled value={2}>An empty contract (TACT)</MenuItem>
+                                                    <MenuItem disabled value={3}>A simple counter contract (TACT)</MenuItem>
+                                                </Select>
+                                            )}
+                                            control={control}
+                                            name={'projectTemplate'}
+                                            rules={{ required: true }}
+/>
+
                                         <FormHelperText>{errors.projectTemplate ? "Required field." : ""}</FormHelperText>
                                     </FormControl>
                                 </Box>
                             </DialogContent>
                             <DialogActions>
                                 <Box sx={{m: 1, position: 'relative'}}>
-                                    <Button type="submit" disabled={loading}>Create </Button>
+                                    <Button onClick={submitForm} type="submit" disabled={loading}>Create </Button>
 
                                     {loading && (
                                         <CircularProgress
@@ -225,8 +239,6 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
                                 </Box>
                             </DialogActions>
                         </div>
-                    </form>
-
 
             </Dialog>
             }

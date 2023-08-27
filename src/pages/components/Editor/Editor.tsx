@@ -128,7 +128,7 @@ export const EditorComponent = observer (  ({webcontainerInstance}: { webcontain
                 defaultLanguage={selectedNode?.text? getFileLanguage(selectedNode?.text): 'text'}
                 language={typeFile}
                 onChange={handleEditorChange}
-                defaultValue="// ton ide alpha-0.10"
+                defaultValue="// ton ide alpha-0.15"
                 onMount={handleEditorDidMount}
             />
 

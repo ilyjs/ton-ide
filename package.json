@@ -1,7 +1,7 @@
 {
-  "name": "tonic",
+  "name": "ton-ide",
   "private": true,
-  "version": "0.0.0",
+  "version": "alpha-0.15",
   "type": "module",
   "scripts": {
     "dev": "vite",
