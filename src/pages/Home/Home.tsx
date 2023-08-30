@@ -126,7 +126,7 @@ export const Home = observer(() => {
     return (
         <Main>
             <DndProvider context={window} key={500} backend={MultiBackend} options={getBackendOptions()}>
-                <NavBar/>
+                <NavBar runTest={runTest} deploy={deploy} build={build}/>
                 <WorkSpace>
                     <ActionBar runTest={runTest} deploy={deploy} build={build}/>
                     <WorkSpaceMosaic>

@@ -187,6 +187,7 @@ export const DialogCreate = observer(function DialogCreate({webcontainerInstance
                                         {...register("contractName", {
                                             required: true,
                                             maxLength: 20,
+                                            value:"Main",
                                             pattern: /^(?:[A-Z][a-z]+)+$/
                                         })}
 
